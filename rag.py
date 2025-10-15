@@ -12,7 +12,6 @@ import hashlib
 def initialize_rag(openai_api_key, pinecone_api_key, mistral_api_key, index_name="rag-index", storage_folder="rag_storage"):
     """Initialize RAG system using Pinecone for vector storage"""
     os.makedirs(storage_folder, exist_ok=True)
-    os.makedirs(os.path.join(storage_folder, "texts"), exist_ok=True)
 
     openai_client = openai.OpenAI(api_key=openai_api_key)
     mistral_client = Mistral(api_key=mistral_api_key)
@@ -46,8 +45,8 @@ def get_pdf_page_count(pdf_path):
 
 
 
-def extract_text_with_mistral_ocr(mistral_client, pdf_path, storage_folder):
-    """Extract text from entire PDF using Mistral OCR and cache results per page."""
+def extract_text_with_mistral_ocr(mistral_client, pdf_path):
+    """Extract text from entire PDF using Mistral OCR."""
     pdf_name = os.path.splitext(os.path.basename(pdf_path))[0]
     
     # Encode PDF to base64
@@ -71,27 +70,19 @@ def extract_text_with_mistral_ocr(mistral_client, pdf_path, storage_folder):
         
         # Extract text per page from response
         page_texts = {}
-        text_folder = os.path.join(storage_folder, "texts", pdf_name)
-        os.makedirs(text_folder, exist_ok=True)
         
         # Parse pages from response
         for page_idx, page in enumerate(ocr_response.pages):
             page_number = page_idx + 1
             extracted_text = page.markdown if hasattr(page, 'markdown') else page.text
-            
-            # Save to file
-            text_path = os.path.join(text_folder, f"page_{page_number:03d}.txt")
-            with open(text_path, 'w', encoding='utf-8') as f:
-                f.write(extracted_text)
-            
             page_texts[page_number] = extracted_text
         
+        print(f"Extracted {len(page_texts)} pages from {pdf_name}")
         return page_texts
         
     except Exception as e:
         print(f"Error extracting text with Mistral OCR: {e}")
         return {}
-
 
 def chunk_text(text, chunk_size=500, overlap=100):
     """Split text into overlapping chunks for better context retrieval."""
@@ -109,11 +100,10 @@ def chunk_text(text, chunk_size=500, overlap=100):
 
 def process_pdf(rag_system, pdf_path):
     mistral_client = rag_system["mistral_client"]
-    storage_folder = rag_system["storage_folder"]
     pdf_name = os.path.splitext(os.path.basename(pdf_path))[0]
 
     # Extract all text from PDF at once using Mistral OCR
-    page_texts = extract_text_with_mistral_ocr(mistral_client, pdf_path, storage_folder)
+    page_texts = extract_text_with_mistral_ocr(mistral_client, pdf_path)
     
     documents = []
     # Process each page's text
@@ -132,7 +122,6 @@ def process_pdf(rag_system, pdf_path):
                     }
                 })
     return documents
-
 
 
 def add_documents_to_pinecone(rag_system, file_path):
@@ -207,6 +196,7 @@ def query_rag(rag_system, query, top_k=3, temperature=0.2, max_tokens=500):
     )
 
     return response.choices[0].message.content.strip()
+
 
 
 
