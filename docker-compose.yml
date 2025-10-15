@@ -11,8 +11,6 @@ services:
       - MISTRAL_API_KEY=${MISTRAL_API_KEY}
       - PINECONE_API_KEY=${PINECONE_API_KEY}
     volumes:
-      # Mount rag_storage to persist extracted text
-      - ./rag_storage:/app/rag_storage
       # Mount uploads directory to persist uploaded PDFs
       - ./uploads:/app/uploads
     restart: unless-stopped
