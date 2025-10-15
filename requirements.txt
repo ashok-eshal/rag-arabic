@@ -1,0 +1,17 @@
+PyPDF2 
+openai 
+faiss-cpu 
+numpy
+pymupdf
+pinecone
+python-dotenv
+fastapi
+uvicorn
+python-docx
+python-pptx
+pandas
+openpyxl
+typing-extensions
+tqdm
+mistralai
+python-multipart
