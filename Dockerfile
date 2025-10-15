@@ -18,8 +18,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create necessary directories
-RUN mkdir -p rag_storage/texts uploads
+# Create uploads directory for file uploads
+RUN mkdir -p uploads
 
 # Expose port 8000
 EXPOSE 8000
